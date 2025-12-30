@@ -9,8 +9,14 @@ namespace Nop.Plugin.Misc.Polls.Public.Components;
 /// </summary>
 public class HomepagePollsViewComponent : NopViewComponent
 {
+    #region Fields
+
     private readonly PollModelFactory _pollModelFactory;
     private readonly PollSettings _pollSettings;
+
+    #endregion
+
+    #region Ctor
 
     public HomepagePollsViewComponent(PollModelFactory pollModelFactory, PollSettings pollSettings)
     {
@@ -18,6 +24,17 @@ public class HomepagePollsViewComponent : NopViewComponent
         _pollSettings = pollSettings;
     }
 
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Invoke the view component
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the view component result
+    /// </returns>
     public async Task<IViewComponentResult> InvokeAsync()
     {
         if (!_pollSettings.Enabled)
@@ -25,8 +42,10 @@ public class HomepagePollsViewComponent : NopViewComponent
 
         var model = await _pollModelFactory.PrepareHomepagePollModelsAsync();
         if (!model.Any())
-            return Content("");
+            return Content(string.Empty);
 
         return View("~/Plugins/Misc.Polls/Public/Views/HomepagePolls.cshtml", model);
     }
+
+    #endregion
 }

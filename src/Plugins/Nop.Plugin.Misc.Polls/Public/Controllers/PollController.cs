@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
-using Nop.Plugin.Misc.Polls.Domain;
 using Nop.Plugin.Misc.Polls.Public.Factories;
 using Nop.Plugin.Misc.Polls.Services;
 using Nop.Services.Customers;
@@ -46,7 +45,7 @@ public class PollController : BasePublicController
     #region Methods
 
     [HttpPost]
-    public virtual async Task<IActionResult> Vote(int pollAnswerId)
+    public async Task<IActionResult> Vote(int pollAnswerId)
     {
         var pollAnswer = await _pollService.GetPollAnswerByIdAsync(pollAnswerId);
         if (pollAnswer == null)
@@ -65,7 +64,7 @@ public class PollController : BasePublicController
         if (!alreadyVoted)
         {
             //vote
-            await _pollService.InsertPollVotingRecordAsync(new PollVotingRecord
+            await _pollService.InsertPollVotingRecordAsync(new()
             {
                 PollAnswerId = pollAnswer.Id,
                 CustomerId = customer.Id,

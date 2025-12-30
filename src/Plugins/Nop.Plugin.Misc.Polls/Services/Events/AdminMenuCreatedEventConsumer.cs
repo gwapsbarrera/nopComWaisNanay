@@ -1,7 +1,7 @@
-﻿using Nop.Services.Events;
+﻿using Nop.Services.Cms;
+using Nop.Services.Events;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Events;
-using Nop.Web.Framework.Menu;
 
 namespace Nop.Plugin.Misc.Polls.Services.Events;
 
@@ -13,14 +13,17 @@ public class AdminMenuCreatedEventConsumer : IConsumer<AdminMenuCreatedEvent>
     #region Fields
 
     private readonly ILocalizationService _localizationService;
+    private readonly IWidgetPluginManager _pluginManager;
 
     #endregion
 
     #region Ctor
 
-    public AdminMenuCreatedEventConsumer(ILocalizationService localizationService)
+    public AdminMenuCreatedEventConsumer(ILocalizationService localizationService,
+        IWidgetPluginManager pluginManager)
     {
         _localizationService = localizationService;
+        _pluginManager = pluginManager;
     }
 
     #endregion
@@ -34,7 +37,14 @@ public class AdminMenuCreatedEventConsumer : IConsumer<AdminMenuCreatedEvent>
     /// <returns>A task that represents the asynchronous operation</returns>
     public async Task HandleEventAsync(AdminMenuCreatedEvent eventMessage)
     {
-        eventMessage.RootMenuItem.InsertAfter("Blog comments", new AdminMenuItem
+        var plugin = await _pluginManager.LoadPluginBySystemNameAsync(PollsDefaults.SystemName);
+
+        //the LoadPluginBySystemNameAsync method returns only plugins that are already fully installed,
+        //while the IConsumer<AdminMenuCreatedEvent> event can be called before the installation is complete
+        if (plugin == null || !_pluginManager.IsPluginActive(plugin))
+            return;
+
+        eventMessage.RootMenuItem.InsertAfter("Blog comments", new()
         {
             SystemName = "Polls",
             Title = await _localizationService.GetResourceAsync("Plugins.Misc.Polls"),

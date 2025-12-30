@@ -55,7 +55,7 @@ public class PollModelFactory
     /// <param name="searchModel">Poll answer search model</param>
     /// <param name="poll">Poll</param>
     /// <returns>Poll answer search model</returns>
-    protected virtual PollAnswerSearchModel PreparePollAnswerSearchModel(PollAnswerSearchModel searchModel, Poll poll)
+    private PollAnswerSearchModel PreparePollAnswerSearchModel(PollAnswerSearchModel searchModel, Poll poll)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
         ArgumentNullException.ThrowIfNull(poll);
@@ -80,7 +80,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the poll search model
     /// </returns>
-    public virtual async Task<PollSearchModel> PreparePollSearchModelAsync(PollSearchModel searchModel)
+    public async Task<PollSearchModel> PreparePollSearchModelAsync(PollSearchModel searchModel)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -103,7 +103,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the poll list model
     /// </returns>
-    public virtual async Task<PollListModel> PreparePollListModelAsync(PollSearchModel searchModel)
+    public async Task<PollListModel> PreparePollListModelAsync(PollSearchModel searchModel)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -146,7 +146,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the poll model
     /// </returns>
-    public virtual async Task<PollModel> PreparePollModelAsync(PollModel model, Poll poll, bool excludeProperties = false)
+    public async Task<PollModel> PreparePollModelAsync(PollModel model, Poll poll, bool excludeProperties = false)
     {
         if (poll != null)
         {
@@ -185,7 +185,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the poll answer list model
     /// </returns>
-    public virtual async Task<PollAnswerListModel> PreparePollAnswerListModelAsync(PollAnswerSearchModel searchModel, Poll poll)
+    public async Task<PollAnswerListModel> PreparePollAnswerListModelAsync(PollAnswerSearchModel searchModel, Poll poll)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
         ArgumentNullException.ThrowIfNull(poll);

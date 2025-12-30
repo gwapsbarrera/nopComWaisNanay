@@ -21,8 +21,7 @@ public class PollService
 
     #region Ctor
 
-    public PollService(
-        IRepository<Poll> pollRepository,
+    public PollService(IRepository<Poll> pollRepository,
         IRepository<PollAnswer> pollAnswerRepository,
         IRepository<PollVotingRecord> pollVotingRecordRepository,
         IStoreMappingService storeMappingService)
@@ -45,7 +44,7 @@ public class PollService
     /// A task that represents the asynchronous operation
     /// The task result contains the poll
     /// </returns>
-    public virtual async Task<Poll> GetPollByIdAsync(int pollId)
+    public async Task<Poll> GetPollByIdAsync(int pollId)
     {
         return await _pollRepository.GetByIdAsync(pollId, cache => default);
     }
@@ -65,7 +64,7 @@ public class PollService
     /// A task that represents the asynchronous operation
     /// The task result contains the polls
     /// </returns>
-    public virtual async Task<IPagedList<Poll>> GetPollsAsync(int storeId = 0, int languageId = 0, bool showHidden = false,
+    public async Task<IPagedList<Poll>> GetPollsAsync(int storeId = 0, int languageId = 0, bool showHidden = false,
         bool loadShownOnHomepageOnly = false, bool loadShowInLeftSideOnly = false, string systemKeyword = null,
         int pageIndex = 0, int pageSize = int.MaxValue)
     {
@@ -112,7 +111,7 @@ public class PollService
     /// </summary>
     /// <param name="poll">The poll</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeletePollAsync(Poll poll)
+    public async Task DeletePollAsync(Poll poll)
     {
         await _pollRepository.DeleteAsync(poll);
     }
@@ -122,7 +121,7 @@ public class PollService
     /// </summary>
     /// <param name="poll">Poll</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertPollAsync(Poll poll)
+    public async Task InsertPollAsync(Poll poll)
     {
         await _pollRepository.InsertAsync(poll);
     }
@@ -132,7 +131,7 @@ public class PollService
     /// </summary>
     /// <param name="poll">Poll</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdatePollAsync(Poll poll)
+    public async Task UpdatePollAsync(Poll poll)
     {
         await _pollRepository.UpdateAsync(poll);
     }
@@ -145,7 +144,7 @@ public class PollService
     /// A task that represents the asynchronous operation
     /// The task result contains the poll answer
     /// </returns>
-    public virtual async Task<PollAnswer> GetPollAnswerByIdAsync(int pollAnswerId)
+    public async Task<PollAnswer> GetPollAnswerByIdAsync(int pollAnswerId)
     {
         return await _pollAnswerRepository.GetByIdAsync(pollAnswerId, cache => default);
     }
@@ -155,7 +154,7 @@ public class PollService
     /// </summary>
     /// <param name="pollAnswer">Poll answer</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task DeletePollAnswerAsync(PollAnswer pollAnswer)
+    public async Task DeletePollAnswerAsync(PollAnswer pollAnswer)
     {
         await _pollAnswerRepository.DeleteAsync(pollAnswer);
     }
@@ -164,11 +163,13 @@ public class PollService
     /// Gets a poll answers by parent poll
     /// </summary>
     /// <param name="pollId">The poll identifier</param>
-    /// <returns>Poll answer</returns>
     /// <param name="pageIndex">Page index</param>
     /// <param name="pageSize">Page size</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task<IPagedList<PollAnswer>> GetPollAnswerByPollAsync(int pollId, int pageIndex = 0, int pageSize = int.MaxValue)
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the poll answers
+    /// </returns>
+    public async Task<IPagedList<PollAnswer>> GetPollAnswerByPollAsync(int pollId, int pageIndex = 0, int pageSize = int.MaxValue)
     {
         var query = _pollAnswerRepository.Table.Where(pa => pa.PollId == pollId);
 
@@ -184,7 +185,7 @@ public class PollService
     /// </summary>
     /// <param name="pollAnswer">Poll answer</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertPollAnswerAsync(PollAnswer pollAnswer)
+    public async Task InsertPollAnswerAsync(PollAnswer pollAnswer)
     {
         await _pollAnswerRepository.InsertAsync(pollAnswer);
     }
@@ -194,7 +195,7 @@ public class PollService
     /// </summary>
     /// <param name="pollAnswer">Poll answer</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task UpdatePollAnswerAsync(PollAnswer pollAnswer)
+    public async Task UpdatePollAnswerAsync(PollAnswer pollAnswer)
     {
         await _pollAnswerRepository.UpdateAsync(pollAnswer);
     }
@@ -208,18 +209,17 @@ public class PollService
     /// A task that represents the asynchronous operation
     /// The task result contains the result
     /// </returns>
-    public virtual async Task<bool> AlreadyVotedAsync(int pollId, int customerId)
+    public async Task<bool> AlreadyVotedAsync(int pollId, int customerId)
     {
         if (pollId == 0 || customerId == 0)
             return false;
 
-        var result = await
+        return await
             (from pa in _pollAnswerRepository.Table
              join pvr in _pollVotingRecordRepository.Table on pa.Id equals pvr.PollAnswerId
              where pa.PollId == pollId && pvr.CustomerId == customerId
              select pvr)
             .AnyAsync();
-        return result;
     }
 
     /// <summary>
@@ -227,7 +227,7 @@ public class PollService
     /// </summary>
     /// <param name="pollVotingRecord">Voting record</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InsertPollVotingRecordAsync(PollVotingRecord pollVotingRecord)
+    public async Task InsertPollVotingRecordAsync(PollVotingRecord pollVotingRecord)
     {
         await _pollVotingRecordRepository.InsertAsync(pollVotingRecord);
     }
@@ -236,16 +236,15 @@ public class PollService
     /// Gets a poll voting records by parent answer
     /// </summary>
     /// <param name="pollAnswerId">Poll answer identifier</param>
-    /// <returns>Poll answer</returns>
-    /// <param name="pageIndex">Page index</param>
-    /// <param name="pageSize">Page size</param>
-    /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task<IPagedList<PollVotingRecord>> GetPollVotingRecordsByPollAnswerAsync(int pollAnswerId, int pageIndex = 0, int pageSize = int.MaxValue)
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the poll voting records
+    /// </returns>
+    public async Task<IList<PollVotingRecord>> GetPollVotingRecordsByPollAnswerAsync(int pollAnswerId)
     {
         var query = _pollVotingRecordRepository.Table.Where(pa => pa.PollAnswerId == pollAnswerId);
 
-        //return paged list of poll voting records
-        return await query.ToPagedListAsync(pageIndex, pageSize);
+        return await query.ToListAsync();
     }
 
     #endregion

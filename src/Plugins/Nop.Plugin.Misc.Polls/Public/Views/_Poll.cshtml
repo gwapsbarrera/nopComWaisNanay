@@ -1,4 +1,5 @@
 ﻿@model PollModel
+
 <div class="poll" id="poll-block-@(Model.Id)">
     <strong class="poll-display-text">@Model.Name</strong>
     @if (Model.AlreadyVoted)
@@ -7,11 +8,11 @@
             @foreach (var item in Model.Answers)
             {
                 <li class="answer">
-                    @string.Format(T("Plugins.Misc.Polls.VotesResultLine").Text, item.Name, item.NumberOfVotes, item.PercentOfTotalVotes.ToString("0.0"))
+                    @T("Plugins.Misc.Polls.VotesResultLine", item.Name, item.NumberOfVotes, item.PercentOfTotalVotes.ToString("0.0"))
                 </li>
             }
         </ul>
-        <span class="poll-total-votes">@string.Format(T("Plugins.Misc.Polls.TotalVotes").Text, Model.TotalVotes)</span>
+        <span class="poll-total-votes">@T("Plugins.Misc.Polls.TotalVotes", Model.TotalVotes)</span>
     }
     else
     {

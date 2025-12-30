@@ -16,20 +16,13 @@ public class SchemaMigration : Migration
     /// </summary>
     public override void Up()
     {
-        var pollsTableName = NameCompatibilityManager.GetTableName(typeof(Poll));
-        var pollAnswerTableName = NameCompatibilityManager.GetTableName(typeof(PollAnswer));
-        var pollVotingRecordTableName = NameCompatibilityManager.GetTableName(typeof(PollVotingRecord));
-
-        if (!Schema.Table(pollsTableName).Exists())
+        if (!Schema.Table(NameCompatibilityManager.GetTableName(typeof(Poll))).Exists())
             this.CreateTableIfNotExists<Poll>();
         else
             this.AddOrAlterColumnFor<Poll>(t => t.ShowInLeftSideColumn).AsBoolean().WithDefaultValue(false);
 
-        if (!Schema.Table(pollAnswerTableName).Exists())
-            this.CreateTableIfNotExists<PollAnswer>();
-
-        if (!Schema.Table(pollVotingRecordTableName).Exists())
-            this.CreateTableIfNotExists<PollVotingRecord>();
+        this.CreateTableIfNotExists<PollAnswer>();
+        this.CreateTableIfNotExists<PollVotingRecord>();
     }
 
     /// <summary>

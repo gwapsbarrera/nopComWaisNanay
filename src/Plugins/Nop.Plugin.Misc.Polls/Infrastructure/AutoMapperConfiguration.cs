@@ -3,7 +3,7 @@ using Nop.Core.Infrastructure.Mapper;
 using Nop.Plugin.Misc.Polls.Admin.Models;
 using Nop.Plugin.Misc.Polls.Domain;
 
-namespace Nop.Plugin.Misc.News.Infrastructure;
+namespace Nop.Plugin.Misc.Polls.Infrastructure;
 
 /// <summary>
 /// Represents mapping configuration for plugin models

@@ -5,10 +5,6 @@
     NopHtml.SetActiveMenuItemSystemName("Local plugins");
 }
 
-@{
-    Layout = "_ConfigurePlugin";
-}
-
 @await Component.InvokeAsync(typeof(StoreScopeConfigurationViewComponent))
 
 <form asp-controller="PollAdmin" asp-action="Configure" method="post">

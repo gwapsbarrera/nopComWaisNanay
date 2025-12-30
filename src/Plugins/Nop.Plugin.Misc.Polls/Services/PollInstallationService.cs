@@ -25,8 +25,7 @@ public class PollInstallationService
 
     #region Ctor
 
-    public PollInstallationService(
-        ILocalizationService localizationService,
+    public PollInstallationService(ILocalizationService localizationService,
         IRepository<PermissionRecord> permissionRepository,
         IRepository<PermissionRecordCustomerRoleMapping> permissionMappingRepository,
         ISettingService settingService,
@@ -50,7 +49,7 @@ public class PollInstallationService
     /// </summary>
     /// <param name="oldSystemName">Old name of the permission record</param>
     /// <param name="newSystemName">New name of the permission record</param>
-    /// <returns></returns>
+    /// <returns>A task that represents the asynchronous operation</returns>
     private async Task UpdatePermissionMappingsAsync(string oldSystemName, string newSystemName)
     {
         ArgumentException.ThrowIfNullOrEmpty(oldSystemName);
@@ -90,12 +89,11 @@ public class PollInstallationService
     /// <summary>
     /// Initialize <see cref="Poll.ShowInLeftSideColumn" /> based on <see cref="Poll.SystemKeyword" /> to preserve the previous behavior
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A task that represents the asynchronous operation</returns>
     private async Task MapExistedPollsInLeftSidebarAsync()
     {
         var existedPolls = await _pollService.GetPollsAsync(systemKeyword: "LeftColumnPoll");
-
-        if (existedPolls.Count == 0)
+        if (!existedPolls.Any())
             return;
 
         foreach (var poll in existedPolls)
@@ -108,7 +106,7 @@ public class PollInstallationService
     /// <summary>
     /// Update permission record names
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A task that represents the asynchronous operation</returns>
     private async Task PreparePermissionMappingsAsync()
     {
         await UpdatePermissionMappingsAsync("ContentManagement.PollsView", PollsDefaults.Permissions.POLLS_VIEW);
@@ -117,11 +115,13 @@ public class PollInstallationService
 
     #endregion
 
+    #region Methods
+
     /// <summary>
     /// Install sample polls
     /// </summary>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task InstallSampleDataAsync()
+    public async Task InstallSampleDataAsync()
     {
         var language = await _workContext.GetWorkingLanguageAsync();
 
@@ -137,28 +137,28 @@ public class PollInstallationService
 
         await _pollService.InsertPollAsync(poll);
 
-        await _pollService.InsertPollAnswerAsync(new PollAnswer()
+        await _pollService.InsertPollAnswerAsync(new()
         {
             PollId = poll.Id,
             Name = "Excellent",
             DisplayOrder = 1
         });
 
-        await _pollService.InsertPollAnswerAsync(new PollAnswer()
+        await _pollService.InsertPollAnswerAsync(new()
         {
             PollId = poll.Id,
             Name = "Good",
             DisplayOrder = 2
         });
 
-        await _pollService.InsertPollAnswerAsync(new PollAnswer()
+        await _pollService.InsertPollAnswerAsync(new()
         {
             PollId = poll.Id,
             Name = "Poor",
             DisplayOrder = 3
         });
 
-        await _pollService.InsertPollAnswerAsync(new PollAnswer()
+        await _pollService.InsertPollAnswerAsync(new()
         {
             PollId = poll.Id,
             Name = "Very bad",
@@ -249,9 +249,12 @@ public class PollInstallationService
 
         //locales
         await _localizationService.DeleteLocaleResourcesAsync("Plugins.Misc.Polls");
+        await _localizationService.DeleteLocaleResourcesAsync("Security.Permission.Polls");
 
         //permission
         await _permissionRepository.DeleteAsync(record => record.SystemName == PollsDefaults.Permissions.POLLS_MANAGE
             || record.SystemName == PollsDefaults.Permissions.POLLS_VIEW);
     }
+
+    #endregion
 }

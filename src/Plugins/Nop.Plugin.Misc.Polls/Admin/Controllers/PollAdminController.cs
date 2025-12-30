@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Plugin.Misc.Polls.Admin.Factories;
 using Nop.Plugin.Misc.Polls.Admin.Models;
 using Nop.Plugin.Misc.Polls.Domain;
@@ -30,10 +31,10 @@ public class PollAdminController : BasePluginController
     private readonly ILocalizationService _localizationService;
     private readonly INotificationService _notificationService;
     private readonly ISettingService _settingService;
+    private readonly IStoreContext _storeContext;
     private readonly IStoreMappingService _storeMappingService;
     private readonly PollModelFactory _pollModelFactory;
     private readonly PollService _pollService;
-    private readonly PollSettings _pollSettings;
 
     #endregion
 
@@ -42,18 +43,18 @@ public class PollAdminController : BasePluginController
     public PollAdminController(ILocalizationService localizationService,
         INotificationService notificationService,
         ISettingService settingService,
+        IStoreContext storeContext,
         IStoreMappingService storeMappingService,
         PollModelFactory pollModelFactory,
-        PollService pollService,
-        PollSettings pollSettings)
+        PollService pollService)
     {
         _localizationService = localizationService;
         _notificationService = notificationService;
         _settingService = settingService;
+        _storeContext = storeContext;
         _pollModelFactory = pollModelFactory;
         _storeMappingService = storeMappingService;
         _pollService = pollService;
-        _pollSettings = pollSettings;
     }
 
     #endregion
@@ -63,10 +64,17 @@ public class PollAdminController : BasePluginController
     [CheckPermission(StandardPermission.Configuration.MANAGE_PLUGINS)]
     public async Task<IActionResult> Configure()
     {
+        var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
+        var pollSettings = await _settingService.LoadSettingAsync<PollSettings>(storeId);
+
         var model = new ConfigurationModel
         {
-            Enabled = _pollSettings.Enabled
+            Enabled = pollSettings.Enabled,
+            ActiveStoreScopeConfiguration = storeId
         };
+
+        if (storeId > 0)
+            model.Enabled_OverrideForStore = await _settingService.SettingExistsAsync(pollSettings, settings => settings.Enabled, storeId);
 
         return View("~/Plugins/Misc.Polls/Admin/Views/Configure.cshtml", model);
     }
@@ -78,9 +86,13 @@ public class PollAdminController : BasePluginController
         if (!ModelState.IsValid)
             return await Configure();
 
-        _pollSettings.Enabled = model.Enabled;
+        var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
+        var pollSettings = await _settingService.LoadSettingAsync<PollSettings>(storeId);
 
-        await _settingService.SaveSettingAsync(_pollSettings);
+        pollSettings.Enabled = model.Enabled;
+
+        await _settingService.SaveSettingOverridablePerStoreAsync(pollSettings, settings => settings.Enabled, model.Enabled_OverrideForStore, storeId, false);
+        await _settingService.ClearCacheAsync();
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
 
@@ -91,23 +103,23 @@ public class PollAdminController : BasePluginController
 
     #region Polls
 
-    public virtual IActionResult Index()
+    public IActionResult Index()
     {
         return RedirectToAction("List");
     }
 
     [CheckPermission(PollsDefaults.Permissions.POLLS_VIEW)]
-    public virtual async Task<IActionResult> List()
+    public async Task<IActionResult> List()
     {
         //prepare model
-        var model = await _pollModelFactory.PreparePollSearchModelAsync(new PollSearchModel());
+        var model = await _pollModelFactory.PreparePollSearchModelAsync(new());
 
         return View("~/Plugins/Misc.Polls/Admin/Views/List.cshtml", model);
     }
 
     [HttpPost]
     [CheckPermission(PollsDefaults.Permissions.POLLS_VIEW)]
-    public virtual async Task<IActionResult> List(PollSearchModel searchModel)
+    public async Task<IActionResult> List(PollSearchModel searchModel)
     {
         //prepare model
         var model = await _pollModelFactory.PreparePollListModelAsync(searchModel);
@@ -116,17 +128,17 @@ public class PollAdminController : BasePluginController
     }
 
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> Create()
+    public async Task<IActionResult> Create()
     {
         //prepare model
-        var model = await _pollModelFactory.PreparePollModelAsync(new PollModel(), null);
+        var model = await _pollModelFactory.PreparePollModelAsync(new(), null);
 
         return View("~/Plugins/Misc.Polls/Admin/Views/Create.cshtml", model);
     }
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> Create(PollModel model, bool continueEditing)
+    public async Task<IActionResult> Create(PollModel model, bool continueEditing)
     {
         if (ModelState.IsValid)
         {
@@ -148,11 +160,11 @@ public class PollAdminController : BasePluginController
         model = await _pollModelFactory.PreparePollModelAsync(model, null, true);
 
         //if we got this far, something failed, redisplay form
-        return View(model);
+        return View("~/Plugins/Misc.Polls/Admin/Views/Create.cshtml", model);
     }
 
     [CheckPermission(PollsDefaults.Permissions.POLLS_VIEW)]
-    public virtual async Task<IActionResult> Edit(int id)
+    public async Task<IActionResult> Edit(int id)
     {
         //try to get a poll with the specified id
         var poll = await _pollService.GetPollByIdAsync(id);
@@ -167,7 +179,7 @@ public class PollAdminController : BasePluginController
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> Edit(PollModel model, bool continueEditing)
+    public async Task<IActionResult> Edit(PollModel model, bool continueEditing)
     {
         //try to get a poll with the specified id
         var poll = await _pollService.GetPollByIdAsync(model.Id);
@@ -194,12 +206,12 @@ public class PollAdminController : BasePluginController
         model = await _pollModelFactory.PreparePollModelAsync(model, poll, true);
 
         //if we got this far, something failed, redisplay form
-        return View(model);
+        return View("~/Plugins/Misc.Polls/Admin/Views/Edit.cshtml", model);
     }
 
     [HttpPost]
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         //try to get a poll with the specified id
         var poll = await _pollService.GetPollByIdAsync(id);
@@ -210,7 +222,7 @@ public class PollAdminController : BasePluginController
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Plugins.Misc.Polls.Deleted"));
 
-        return RedirectToAction("~/Plugins/Misc.Polls/Admin/Views/Delete.cshtml", "List");
+        return RedirectToAction("List");
     }
 
     #endregion
@@ -219,7 +231,7 @@ public class PollAdminController : BasePluginController
 
     [HttpPost]
     [CheckPermission(PollsDefaults.Permissions.POLLS_VIEW)]
-    public virtual async Task<IActionResult> PollAnswers(PollAnswerSearchModel searchModel)
+    public async Task<IActionResult> PollAnswers(PollAnswerSearchModel searchModel)
     {
         //try to get a poll with the specified id
         var poll = await _pollService.GetPollByIdAsync(searchModel.PollId)
@@ -231,10 +243,9 @@ public class PollAdminController : BasePluginController
         return Json(model);
     }
 
-    //ValidateAttribute is used to force model validation
     [HttpPost]
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> PollAnswerUpdate([Validate] PollAnswerModel model)
+    public async Task<IActionResult> PollAnswerUpdate([Validate] PollAnswerModel model)
     {
         if (!ModelState.IsValid)
             return ErrorJson(ModelState.SerializeErrors());
@@ -250,10 +261,9 @@ public class PollAdminController : BasePluginController
         return new NullJsonResult();
     }
 
-    //ValidateAttribute is used to force model validation
     [HttpPost]
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> PollAnswerAdd(int pollId, [Validate] PollAnswerModel model)
+    public async Task<IActionResult> PollAnswerAdd(int pollId, [Validate] PollAnswerModel model)
     {
         if (!ModelState.IsValid)
             return ErrorJson(ModelState.SerializeErrors());
@@ -266,7 +276,7 @@ public class PollAdminController : BasePluginController
 
     [HttpPost]
     [CheckPermission(PollsDefaults.Permissions.POLLS_MANAGE)]
-    public virtual async Task<IActionResult> PollAnswerDelete(int id)
+    public async Task<IActionResult> PollAnswerDelete(int id)
     {
         //try to get a poll answer with the specified id
         var pollAnswer = await _pollService.GetPollAnswerByIdAsync(id)

@@ -13,24 +13,24 @@ public class PollModelFactory
 {
     #region Fields
 
-    private readonly PollService _pollService;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly IStoreContext _storeContext;
     private readonly IWorkContext _workContext;
+    private readonly PollService _pollService;
 
     #endregion
 
     #region Ctor
 
-    public PollModelFactory(PollService pollService,
-        IStaticCacheManager staticCacheManager,
+    public PollModelFactory(IStaticCacheManager staticCacheManager,
         IStoreContext storeContext,
-        IWorkContext workContext)
+        IWorkContext workContext,
+        PollService pollService)
     {
-        _pollService = pollService;
         _staticCacheManager = staticCacheManager;
         _storeContext = storeContext;
         _workContext = workContext;
+        _pollService = pollService;
     }
 
     #endregion
@@ -46,7 +46,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the poll model
     /// </returns>
-    public virtual async Task<PollModel> PreparePollModelAsync(Poll poll, bool setAlreadyVotedProperty)
+    public async Task<PollModel> PreparePollModelAsync(Poll poll, bool setAlreadyVotedProperty)
     {
         ArgumentNullException.ThrowIfNull(poll);
 
@@ -60,11 +60,10 @@ public class PollModelFactory
         };
         var answers = await _pollService.GetPollAnswerByPollAsync(poll.Id);
 
-        foreach (var answer in answers)
-            model.TotalVotes += answer.NumberOfVotes;
+        model.TotalVotes = answers.Sum(answer => answer.NumberOfVotes);
         foreach (var pa in answers)
         {
-            model.Answers.Add(new PollAnswerModel
+            model.Answers.Add(new()
             {
                 Id = pa.Id,
                 Name = pa.Name,
@@ -83,7 +82,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the list of the poll model
     /// </returns>
-    public virtual async Task<PollModel> PrepareLeftSidePollModelAsync()
+    public async Task<PollModel> PrepareLeftSidePollModelAsync()
     {
         var store = await _storeContext.GetCurrentStoreAsync();
         var language = await _workContext.GetWorkingLanguageAsync();
@@ -115,7 +114,7 @@ public class PollModelFactory
     /// A task that represents the asynchronous operation
     /// The task result contains the list of the poll model
     /// </returns>
-    public virtual async Task<List<PollModel>> PrepareHomepagePollModelsAsync()
+    public async Task<List<PollModel>> PrepareHomepagePollModelsAsync()
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
