@@ -1416,6 +1416,54 @@ label, label + * {
   background-color: #ddd;
 }
 
+/*override main menu background color to green and font-color to while*/
+/* Menu color: use --accent-green-color and white text.
+   Added as an override to ensure it takes precedence over earlier rules. */
+.header-menu .menu__toggle {
+  background: var(--accent-green-color) url(../images/menu-icon.png) right center no-repeat;
+  color: #fff;
+}
+
+/* Apply background + text color to menu items, grid/list views and links.
+   Use !important to override previous background-color rules set for different breakpoints. */
+.header-menu .menu,
+.header-menu .menu__item,
+.header-menu .menu > .menu__item,
+.header-menu .menu__item:not(.menu-dropdown),
+.header-menu .menu__item-toggle,
+.header-menu .menu__link,
+.header-menu .menu__group,
+.header-menu .menu__grid-view,
+.header-menu .menu__list-view {
+  background-color: var(--accent-green-color) !important;
+  color: #fff !important;
+}
+
+  /* Replace black toggle icon with white version for contrast on green background */
+  .header-menu .menu__item-toggle::after {
+    background: url(../images/toggle-white.png) center no-repeat;
+  }
+
+  /* Hover/active states: keep text white, add subtle overlay on hover for affordance */
+  .header-menu .menu__link:hover,
+  .header-menu .menu__item:hover > .menu__item-toggle,
+  .header-menu .menu__item:focus-within > .menu__item-toggle {
+    color: #fff !important;
+    opacity: 0.95;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+/* Ensure dropdown panels also use white text (they might contain nested white backgrounds) */
+.header-menu .menu__grid-view,
+.header-menu .menu__list-view {
+  color: #fff !important;
+}
+
+  /* If submenu links use their own hover background, keep contrast but subtle */
+  .header-menu .menu__list-view .menu__link:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
 /** Main menu END **/
 
 /** Footer menu START **/
